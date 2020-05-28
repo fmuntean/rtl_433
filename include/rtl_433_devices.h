@@ -162,6 +162,7 @@
     DECL(eurochron_efth800) \
     DECL(cotech_36_7959) \
     DECL(ert_idm) \
+    DECL(ert_scmp) \
     /* Add new decoders here. */
 
 #define DECL(name) extern r_device name;
