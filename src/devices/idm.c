@@ -87,7 +87,7 @@ static int idm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     */
 
 
-    for(int i=0;i<sizeof(IDM_PREMABLE);i++)
+    for(unsigned int i=0;i<sizeof(IDM_PREAMBLE);i++)
       if (IDM_PREAMBLE[i] != b[i])
          return DECODE_ABORT_EARLY; // no preamble matching
 
@@ -112,8 +112,8 @@ static int idm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
             "idm_type",        "IDM Type",                      DATA_INT, idm_type,
             "consumption_interval",  "Consumption Interval",    DATA_INT, consumption_interval_count,
             "programming_state","Programming State",            DATA_INT, programming_state,
-            "generation", "Generation Count",                   DATA_INT, last_generation_count,
-            "consumption", "Consumption Count",                 DATA_INT, last_consumption_count,
+            "generation", "Generation Count",                   DATA_INT, last_generation,
+            "consumption", "Consumption Count",                 DATA_INT, last_consumption,
             "net", "Consumption NET",                           DATA_INT, last_consumption_net,
             "sn_crc", "Serial Number CRC",                      DATA_INT, sn_crc,
             "packet_crc", "Packet CRC",                         DATA_INT, packet_crc,
@@ -138,7 +138,7 @@ static char *output_fields[] = {
         "sn_crc",
         "packet_crc",
         "mic",
-        NULL,
+        NULL
 };
 
 r_device ert_idm = {
@@ -150,5 +150,5 @@ r_device ert_idm = {
         .reset_limit = 64,
         .decode_fn   = &idm_decode,
         .disabled    = 0,
-        .fields      = output_fields,
+        .fields      = output_fields
 };
