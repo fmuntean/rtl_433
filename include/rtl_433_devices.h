@@ -163,6 +163,7 @@
     DECL(cotech_36_7959) \
     DECL(ert_idm) \
     DECL(ert_scmp) \
+    DECL(acurite_rne590A1tx) \
     /* Add new decoders here. */
 
 #define DECL(name) extern r_device name;

@@ -49,63 +49,24 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     if (bitbuffer->bits_per_row[0] != 16*8) //16 bytes long package
         return DECODE_ABORT_LENGTH;
 
-    //MFD: TODO: implement CRC checking
-
     b = bitbuffer->bb[0];
-    /* old crc from ert.c
-    
-    if (crc16(&b[2], 10, 0x6F63, 0))
-        return DECODE_FAIL_MIC;
-    */
-    
-    /* CRC from rtlamr go lang
-    // If the checksum fails, bail.
-		if residue := p.Checksum(p.data.Bytes[4:92]); residue != p.Residue {
-			continue
-		}
-
-		// If the serial checksum fails, bail.
-		buf := make([]byte, 6)
-		copy(buf, p.data.Bytes[9:13])
-		copy(buf[4:], p.data.Bytes[88:90])
-		if residue := p.Checksum(buf); residue != p.Residue {
-			continue
-		}
-    */
-
-
+   
     for(unsigned int i=0;i<sizeof(IDM_PREAMBLE);i++)
       if (IDM_PREAMBLE[i] != b[i])
          return DECODE_ABORT_EARLY; // no preamble matching
 
 
-     crc = (b[14]<<8) | b[15];
+     crc = (b[14]<<8) | b[15]; //extract the CRC
 
-//uint16_t calc_crc = crc16(&b[2], 12, 0x1021, 0);
+    uint16_t calc_crc = crc16(&b[2], 12, 0x1021, 0xFFFF) ^ 0xFFFF;
 
-    //if (crc_received != crc_calculated) {
-    //    if (decoder->verbose > 1) {
-  //  fprintf(stderr, "CRC check (0x%X != 0x%X)\n", calc_crc, crc);
-    //    }
-    //    return DECODE_FAIL_MIC;
-   // }
+    if (crc != crc_calculated) {
+        if (decoder->verbose > 1) {
+          fprintf(stderr, "CRC check (0x%X != 0x%X)\n", calc_crc, crc);
+        }
+        return DECODE_FAIL_MIC;
+    }
 
-
-	uint16_t calc_crc = crc16(&b[2], 12, 0x1021, 0xFFFF) ^ 0xFFFF;
- //fprintf(stderr, "CRC check (0x%X != 0x%X)\n", calc_crc, crc);
-
-   // calc_crc = crc16(&b[2], 12, 0x8408, 0);
- //fprintf(stderr, "CRC check (0x%X != 0x%X)\n", calc_crc, crc);
-
-//calc_crc = crc16(&b[2], 12, 0x8408, 0xFFFF);
-
- //fprintf(stderr, "CRC check (0x%X != 0x%X)\n", calc_crc, crc);
-
-
-
-// fprintf(stderr, "CRC check (0x%X != 0x%X)\n", calc_crc, crc);
-
-//      uint16_t calc_crc = crc16lsb(&b[2],12,0x8408,0);
     /* Extract parameters */
     protocol = b[2];
     scm_type = b[3];
@@ -114,7 +75,7 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     tamper = (b[12]<<8) | b[13];
     //crc = (b[14]<<8) | b[15]; 
 
-
+    //extract raw data for further processing if needed
     char strData[16*2+1];
     const char *hex="0123456789ABCDEF";
     for(int i=0;i<16;i++)
@@ -127,17 +88,17 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     
     /* clang-format off */
     data = data_make(
-            "model",           "",                  DATA_STRING, "SCM+",
-            "protocol", "Protocol ID",              DATA_INT, protocol,
-            "scm_type",        "SCM+ Type",         DATA_INT, scm_type,
-            "id",              "Id",                DATA_INT, ert_id,
-            "consumption",  "Consumption",          DATA_INT, consumption,
-            "tamper", "Tamper",                     DATA_INT, tamper,
-            "crc", "Packet CRC",                    DATA_INT, crc,
-	    "calc_crc", "CRC",                      DATA_INT, calc_crc,
-            "raw", "RAW DATA",			   DATA_STRING, strData,
-	    "mic",             "Integrity",         DATA_STRING, "CRC",
-            NULL);
+        "model",        "",                  DATA_STRING, "SCM+",
+        "protocol",     "Protocol ID",       DATA_INT, protocol,
+        "scm_type",     "SCM+ Type",         DATA_INT, scm_type,
+        "id",           "Id",                DATA_INT, ert_id,
+        "consumption",  "Consumption",       DATA_INT, consumption,
+        "tamper",       "Tamper",            DATA_INT, tamper,
+        "crc",          "Packet CRC",        DATA_INT, crc,
+        "calc_crc",     "CRC",               DATA_INT, calc_crc,
+        "raw",          "RAW DATA",			 DATA_STRING, strData,
+        "mic",          "Integrity",         DATA_STRING, "CRC",
+        NULL);
     /* clang-format on */
 
     decoder_output_data(decoder, data);
@@ -153,7 +114,7 @@ static char *output_fields[] = {
         "tamper",
         "crc",
         "calc_crc",
-	"raw",
+	    "raw",
         "mic",
         NULL
 };

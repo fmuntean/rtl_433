@@ -859,6 +859,67 @@ static int acurite_606_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     return 1;
 }
 
+static int acurite_rne590_decode(r_device *decoder, bitbuffer_t *bitbuffer)
+{
+    data_t *data;
+    uint8_t *b;
+    int row;
+    int16_t temp_raw; // temperature as read from the data packet
+    float temp_c;     // temperature in C
+    int battery;      // the battery status: 1 is good, 0 is low
+    int sensor_id;    // the sensor ID - basically a random number that gets reset whenever the battery is removed
+
+    row = bitbuffer_find_repeated_row(bitbuffer, 3, 32); // expected are 6 rows
+    if (row < 0)
+        return DECODE_ABORT_EARLY;
+
+    if (decoder->verbose > 1)
+        bitbuffer_printf(bitbuffer, "%s: ", __func__);
+
+    if (bitbuffer->bits_per_row[row] > 25)
+        return DECODE_ABORT_LENGTH;
+
+    b = bitbuffer->bb[row];
+
+    if (b[4] != 0) //last byte should be zero
+        return DECODE_FAIL_SANITY;
+
+    // reject all blank messages
+    if (b[0] == 0 && b[1] == 0 && b[2] == 0 && b[3] == 0)
+        return DECODE_FAIL_SANITY;
+
+    
+    //TODO: calculate the checksum and only continue if we have a matching checksum
+    //uint8_t chk = lfsr_digest8(b, 3, 0x98, 0xf1);
+    //if (chk != b[3])
+    //    return DECODE_FAIL_MIC;
+
+    // Processing the temperature:
+    // Upper 4 bits are stored in nibble 1, lower 8 bits are stored in nibble 2
+    // upper 4 bits of nibble 1 are reserved for other usages (e.g. battery status)
+    sensor_id = b[0] & 0xFE; //first 6 bits and it changes each time it resets or change the battery
+    battery   = (b[0] & 0x01); //1=ok, 0=low battery
+    //next 2 bits are checksum
+    //next two bits are identify ID (maybe channel ?)
+    temp_raw  = (int16_t)( ((b[1] &0x0F) << 12) | (b[2] << 4));
+    temp_raw  = temp_raw >> 4;
+    temp_c    = temp_raw * 0.1f;
+
+    /* clang-format off */
+    data = data_make(
+            "model",            "",             DATA_STRING, _X("Acurite-606TX","Acurite 606TX Sensor"),
+            "id",               "",             DATA_INT, sensor_id,
+            "battery",          "Battery",      DATA_STRING, battery ? "OK" : "LOW",
+            "temperature_C",    "Temperature",  DATA_FORMAT, "%.1f C", DATA_DOUBLE, temp_c,
+            "mic",              "Integrity",    DATA_STRING, "CHECKSUM",
+            NULL);
+    /* clang-format on */
+
+    decoder_output_data(decoder, data);
+    return 1;
+}
+
+
 static int acurite_00275rm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 {
     int crc, battery_low, id, model_flag, valid = 0;
@@ -1150,3 +1211,17 @@ r_device acurite_00275rm = {
     .disabled       = 0,
     .fields         = acurite_00275rm_output_fields,
 };
+
+
+r_device acurite_rne590A1tx = {
+    .name           = "Acurite RNE5901A1TX Temperature",
+    .modulation     = OOK_PULSE_PWM,
+    .short_width    = 232,  // short pulse is 232 us
+    .long_width     = 420,  // long pulse is 420 us
+    .gap_limit      = 520,  // long gap is 384 us, sync gap is 592 us
+    .reset_limit    = 708,  // no packet gap, sync gap is 592 us
+    .sync_width     = 632,  // sync pulse is 632 us
+    .decode_fn      = &acurite_rne5901_decode,
+    .disabled       = 0,
+    .fields         = acurite_606_output_fields,
+}
