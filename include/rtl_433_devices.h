@@ -289,8 +289,8 @@
     DECL(nexus_sauna) \
     DECL(homelead_hg9901) \
     DECL(maverick_xr50) \
-
     DECL(ert_scmp) \
+    DECL(acurite_rne590A1tx) \
     /* Add new decoders here. */
 
 #define DECL(name) extern r_device name;
