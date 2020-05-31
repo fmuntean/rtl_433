@@ -866,7 +866,7 @@ static int acurite_rne590_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     data_t *data;
     uint8_t *b;
     int row;
-    uint8_t identify_id;  
+    uint8_t identify_id,humidity;  
     int16_t temp_raw; // temperature as read from the data packet
     float temp_c;     // temperature in C
     int battery;      // the battery status: 1 is good, 0 is low
@@ -909,6 +909,23 @@ static int acurite_rne590_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     //next 2 bits are checksum
     //next two bits are identify ID (maybe channel ?)
     identify_id = (uint8_t)((b[1]>>4) & 0x03);
+    if ( (b[1] & 0x0F)==0 && b[2]<=100) //MFD: I see no other way to diferentiate humidity from temperature
+    {
+     humidity = b[2];
+     /* clang-format off */
+     data = data_make(
+            "model",            "",             DATA_STRING, "Acurite-RNE590A1TX",
+            "id",               "",             DATA_INT, sensor_id,
+            "bat",              "Battery",      DATA_STRING, battery ? "OK" : "LOW",
+            "identifyID",       "Identify ID",  DATA_INT, identify_id,
+            "humidity",         "Humidity",     DATA_INT, humidity,
+            "mic",              "Integrity",    DATA_STRING, "CHECKSUM",
+            NULL);
+    /* clang-format on */
+
+    }else
+    {
+
     temp_raw  = (int16_t)( ((b[1] &0x0F) << 12) | (b[2] << 4));
     temp_raw  = temp_raw >> 4;
     temp_c    = temp_raw * 0.1f - 50; //MFD: seems to be a 50 degree offset maybe to be able to go negative
@@ -919,11 +936,12 @@ static int acurite_rne590_decode(r_device *decoder, bitbuffer_t *bitbuffer)
             "id",               "",             DATA_INT, sensor_id,
             "bat",              "Battery",      DATA_STRING, battery ? "OK" : "LOW",
             "identifyID",       "Identify ID",  DATA_INT, identify_id,
-	    "temperature_C",    "Temperature",  DATA_FORMAT, "%.1f C", DATA_DOUBLE, temp_c,
-            "temperature_F",    "Temperature F", DATA_FORMAT, "%.1f F", DATA_DOUBLE, temp_c*1.8+32,
+	    "temperature_C",    "Temperature C",  DATA_FORMAT, "%.1f", DATA_DOUBLE, temp_c,
+            "temperature_F",    "Temperature F",  DATA_FORMAT, "%.1f", DATA_DOUBLE, temp_c*1.8+32,
             "mic",              "Integrity",    DATA_STRING, "CHECKSUM",
             NULL);
     /* clang-format on */
+    }
 
     decoder_output_data(decoder, data);
     return 1;
@@ -1182,6 +1200,7 @@ static char *acurite_590_output_fields[] = {
     "identify_id",
     "temperature_C",
     "temperature_F",
+    "humidity",
     "mic",
     NULL,
 };
