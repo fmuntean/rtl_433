@@ -60,7 +60,7 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 
     uint16_t calc_crc = crc16(&b[2], 12, 0x1021, 0xFFFF) ^ 0xFFFF;
 
-    if (crc != crc_calculated) {
+    if (crc != calc_crc) {
         if (decoder->verbose > 1) {
           fprintf(stderr, "CRC check (0x%X != 0x%X)\n", calc_crc, crc);
         }

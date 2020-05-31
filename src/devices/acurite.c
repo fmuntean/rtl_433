@@ -859,17 +859,24 @@ static int acurite_606_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     return 1;
 }
 
+ 
+
 static int acurite_rne590_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 {
     data_t *data;
     uint8_t *b;
     int row;
+    uint8_t identify_id;  
     int16_t temp_raw; // temperature as read from the data packet
     float temp_c;     // temperature in C
     int battery;      // the battery status: 1 is good, 0 is low
     int sensor_id;    // the sensor ID - basically a random number that gets reset whenever the battery is removed
 
-    row = bitbuffer_find_repeated_row(bitbuffer, 3, 32); // expected are 6 rows
+
+    //if (decoder->verbose >1)
+    //  bitbuffer_printf(bitbuffer, "%s: ", __func__);
+
+    row = bitbuffer_find_repeated_row(bitbuffer, 3, 25); // expected are min 3 rows
     if (row < 0)
         return DECODE_ABORT_EARLY;
 
@@ -901,16 +908,19 @@ static int acurite_rne590_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     battery   = (b[0] & 0x01); //1=ok, 0=low battery
     //next 2 bits are checksum
     //next two bits are identify ID (maybe channel ?)
+    identify_id = (uint8_t)((b[1]>>4) & 0x03);
     temp_raw  = (int16_t)( ((b[1] &0x0F) << 12) | (b[2] << 4));
     temp_raw  = temp_raw >> 4;
-    temp_c    = temp_raw * 0.1f;
+    temp_c    = temp_raw * 0.1f - 50; //MFD: seems to be a 50 degree offset maybe to be able to go negative
 
     /* clang-format off */
     data = data_make(
-            "model",            "",             DATA_STRING, _X("Acurite-606TX","Acurite 606TX Sensor"),
+            "model",            "",             DATA_STRING, "Acurite-RNE590A1TX",
             "id",               "",             DATA_INT, sensor_id,
-            "battery",          "Battery",      DATA_STRING, battery ? "OK" : "LOW",
-            "temperature_C",    "Temperature",  DATA_FORMAT, "%.1f C", DATA_DOUBLE, temp_c,
+            "bat",              "Battery",      DATA_STRING, battery ? "OK" : "LOW",
+            "identifyID",       "Identify ID",  DATA_INT, identify_id,
+	    "temperature_C",    "Temperature",  DATA_FORMAT, "%.1f C", DATA_DOUBLE, temp_c,
+            "temperature_F",    "Temperature F", DATA_FORMAT, "%.1f F", DATA_DOUBLE, temp_c*1.8+32,
             "mic",              "Integrity",    DATA_STRING, "CHECKSUM",
             NULL);
     /* clang-format on */
@@ -1164,6 +1174,19 @@ static char *acurite_606_output_fields[] = {
     NULL,
 };
 
+
+static char *acurite_590_output_fields[] = {
+    "model",
+    "id",
+    "bat",
+    "identify_id",
+    "temperature_C",
+    "temperature_F",
+    "mic",
+    NULL,
+};
+
+
 r_device acurite_606 = {
     .name           = "Acurite 606TX Temperature Sensor",
     // actually tests/acurite/02/gfile002.cu8, check this
@@ -1215,13 +1238,13 @@ r_device acurite_00275rm = {
 
 r_device acurite_rne590A1tx = {
     .name           = "Acurite RNE5901A1TX Temperature",
-    .modulation     = OOK_PULSE_PWM,
-    .short_width    = 232,  // short pulse is 232 us
-    .long_width     = 420,  // long pulse is 420 us
-    .gap_limit      = 520,  // long gap is 384 us, sync gap is 592 us
-    .reset_limit    = 708,  // no packet gap, sync gap is 592 us
-    .sync_width     = 632,  // sync pulse is 632 us
-    .decode_fn      = &acurite_rne5901_decode,
+    .modulation     = OOK_PULSE_PPM,  //OOK_PULSE_PWM,
+    .short_width    = 500,  // short pulse is 232 us
+    .long_width     = 1500,  // long pulse is 420 us
+    .gap_limit      = 1484,  // long gap is 384 us, sync gap is 592 us
+    .reset_limit    = 3000,  // no packet gap, sync gap is 592 us
+    .sync_width     = 500,  // sync pulse is 632 us
+    .decode_fn      = &acurite_rne590_decode,
     .disabled       = 0,
-    .fields         = acurite_606_output_fields,
-}
+    .fields         = acurite_590_output_fields,
+};
