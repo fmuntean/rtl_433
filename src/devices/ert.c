@@ -57,8 +57,11 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
         return DECODE_ABORT_LENGTH;
 
     b = bitbuffer->bb[0];
-    if (crc16(&b[2], 10, 0x6F63, 0))
+    if (crc16(&b[2], 10, 0x6F63, 0)){
+        //if (decoder->verbose) 
+            bitrow_printf(bb, bitbuffer->bits_per_row[brow], "ERT-SCM Invalid CRC: %s: raw msg: ", __func__);
         return DECODE_FAIL_MIC;
+        }
 
     /* Instead of detecting the preamble we rely on the
      * CRC and extract the parameters from the back */
