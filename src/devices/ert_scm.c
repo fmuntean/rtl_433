@@ -58,6 +58,10 @@ static int ert_scm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
         return DECODE_ABORT_LENGTH;
 
     b = bitbuffer->bb[0];
+    if (crc16(&b[2], 10, 0x6F63, 0)) {
+        decoder_log(decoder, 2, __func__, "ERT-SCM Invalid CRC:");
+        decoder_log_bitrow(decoder, 2, __func__, b, 96, "Raw Message ");
+    }
 
     // No need to decode/extract values for simple test
     // check id tamper type crc  value not all zero'ed
@@ -79,7 +83,16 @@ static int ert_scm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     consumption_data = (b[4]<<16) | (b[5]<<8) | b[6];
     ert_id = ((b[2]&0x06)<<23) | (b[7]<<16) | (b[8]<<8) | b[9];
 
-    /* clang-format off */
+    //extract raw data for further processing if needed
+    char strData[12*2+1];
+    const char *hex="0123456789ABCDEF";
+    for(int i=0;i<12;i++) {
+      strData[i*2] = hex[(b[i]>>4) & 0xF];
+      strData[i*2+1] = hex[b[i] & 0x0F];
+    }
+    strData[12*2]=0;
+
+   // char *strData = bitrow_asprint_code(&bitbuffer->bb[0], bitbuffer->bits_per_row[0]);    /* clang-format off */
     data = data_make(
             "model",           "",                 DATA_STRING, "ERT-SCM",
             "id",              "Id",               DATA_INT,    ert_id,
@@ -87,11 +100,13 @@ static int ert_scm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
             "ert_type",        "ERT Type",         DATA_INT, ert_type,
             "encoder_tamper",  "Encoder Tamper",   DATA_INT, encoder_tamper,
             "consumption_data","Consumption Data", DATA_INT, consumption_data,
+            "data",            "RAW DATA",         DATA_STRING, strData,
             "mic",             "Integrity",        DATA_STRING, "CRC",
             NULL);
     /* clang-format on */
 
     decoder_output_data(decoder, data);
+
     return 1;
 }
 
@@ -102,6 +117,7 @@ static char const *const output_fields[] = {
         "ert_type",
         "encoder_tamper",
         "consumption_data",
+        "data",
         "mic",
         NULL,
 };
@@ -110,9 +126,10 @@ r_device const ert_scm = {
         .name        = "ERT Standard Consumption Message (SCM)",
         .modulation  = OOK_PULSE_MANCHESTER_ZEROBIT,
         .short_width = 30,
-        .long_width  = 0, // not used
-        .gap_limit   = 0,
-        .reset_limit = 64,
+        .long_width  = 30, // not used
+        .gap_limit   = 1000, //0,
+        .reset_limit = 500, //64,
         .decode_fn   = &ert_scm_decode,
         .fields      = output_fields,
+        .tolerance   = 20 //us
 };
