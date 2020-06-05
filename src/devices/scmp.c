@@ -10,7 +10,7 @@
 */
 
 #include "decoder.h"
-
+#include "decoder_util.h"
 /**
 ERT SCM+ sensors.
 
@@ -76,6 +76,7 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     //crc = (b[14]<<8) | b[15]; 
 
     //extract raw data for further processing if needed
+  
     char strData[16*2+1];
     const char *hex="0123456789ABCDEF";
     for(int i=0;i<16;i++)
@@ -84,37 +85,42 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
       strData[i*2+1] = hex[b[i] & 0x0F];
     }
     strData[16*2]=0;
+  
+//    char *strData = bitrow_asprint_code(bitbuffer->bb[0], bitbuffer->bits_per_row[0]);
 
-    
     /* clang-format off */
     data = data_make(
         "model",        "",                  DATA_STRING, "SCM+",
-        "protocol",     "Protocol ID",       DATA_INT, protocol,
+        "scm_protocol",     "Protocol ID",   DATA_INT, protocol,
         "scm_type",     "SCM+ Type",         DATA_INT, scm_type,
         "id",           "Id",                DATA_INT, ert_id,
-        "consumption",  "Consumption",       DATA_INT, consumption,
+        "consumption_data",  "Consumption",  DATA_INT, consumption,
         "tamper",       "Tamper",            DATA_INT, tamper,
         "crc",          "Packet CRC",        DATA_INT, crc,
         "calc_crc",     "CRC",               DATA_INT, calc_crc,
-        "raw",          "RAW DATA",			 DATA_STRING, strData,
+        "codes",        "RAW DATA",			 DATA_STRING, strData,
         "mic",          "Integrity",         DATA_STRING, "CRC",
         NULL);
     /* clang-format on */
 
     decoder_output_data(decoder, data);
+
+//    free(strData);
+
+
     return 1;
 }
 
 static char *output_fields[] = {
         "model",
-        "protocol",
+        "scm_protocol",
         "scm_type",
         "id",
-        "consumption",
+        "consumption_data",
         "tamper",
         "crc",
         "calc_crc",
-	    "raw",
+	    "codes",
         "mic",
         NULL
 };
@@ -128,5 +134,6 @@ r_device ert_scmp = {
         .reset_limit = 64,
         .decode_fn   = &scmp_decode,
         .disabled    = 0,
-        .fields      = output_fields
+        .fields      = output_fields,
+        .tolerance   = 10 //us
 };
