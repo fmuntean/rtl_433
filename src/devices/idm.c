@@ -104,6 +104,18 @@ static int idm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     sn_crc = (b[88]<<8) | b[89];
     packet_crc = (b[90]<<8) | b[91]; 
     
+//extract raw data for further processing if needed
+    char strData[92*2+1];
+    const char *hex="0123456789ABCDEF";
+    for(int i=0;i<92;i++)
+    {
+      strData[i*2] = hex[(b[i]>>4) & 0xF];
+      strData[i*2+1] = hex[b[i] & 0x0F];
+    }
+    strData[92*2]=0;
+    
+
+
     /* clang-format off */
     data = data_make(
             "model",           "",                              DATA_STRING, "netIDM",
@@ -117,6 +129,7 @@ static int idm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
             "net", "Consumption NET",                           DATA_INT, last_consumption_net,
             "sn_crc", "Serial Number CRC",                      DATA_INT, sn_crc,
             "packet_crc", "Packet CRC",                         DATA_INT, packet_crc,
+            "data", "RAW DATA",					DATA_STRING, strData,
             "mic",             "Integrity",                     DATA_STRING, "CRC",
             NULL);
     /* clang-format on */
@@ -137,7 +150,8 @@ static char *output_fields[] = {
         "net",
         "sn_crc",
         "packet_crc",
-        "mic",
+        "data",
+	"mic",
         NULL
 };
 

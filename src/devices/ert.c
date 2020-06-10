@@ -59,7 +59,7 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     b = bitbuffer->bb[0];
     if (crc16(&b[2], 10, 0x6F63, 0)){
         //if (decoder->verbose) 
-            bitrow_printf(bb, bitbuffer->bits_per_row[brow], "ERT-SCM Invalid CRC: %s: raw msg: ", __func__);
+            bitrow_printf(bitbuffer->bb, bitbuffer->bits_per_row[0], "ERT-SCM Invalid CRC: %s: raw msg: ", __func__);
         return DECODE_FAIL_MIC;
         }
 
@@ -73,6 +73,17 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     consumption_data = (b[4]<<16) | (b[5]<<8) | b[6];
     ert_id = ((b[2]&0x06)<<23) | (b[7]<<16) | (b[8]<<8) | b[9];
 
+    //extract raw data for further processing if needed
+    char strData[12*2+1];
+    const char *hex="0123456789ABCDEF";
+    for(int i=0;i<12;i++)
+    {
+      strData[i*2] = hex[(b[i]>>4) & 0xF];
+      strData[i*2+1] = hex[b[i] & 0x0F];
+    }
+    strData[12*2]=0;
+
+
     /* clang-format off */
     data = data_make(
             "model",           "",                 DATA_STRING, "ERT-SCM",
@@ -81,6 +92,7 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
             "ert_type",        "ERT Type",         DATA_INT, ert_type,
             "encoder_tamper",  "Encoder Tamper",   DATA_INT, encoder_tamper,
             "consumption_data","Consumption Data", DATA_INT, consumption_data,
+            "data",            "RAW DATA",         DATA_STRING, strData,
             "mic",             "Integrity",        DATA_STRING, "CRC",
             NULL);
     /* clang-format on */
@@ -96,6 +108,7 @@ static char *output_fields[] = {
         "ert_type",
         "encoder_tamper",
         "consumption_data",
+        "data",
         "mic",
         NULL,
 };

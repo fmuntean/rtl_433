@@ -96,7 +96,7 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
         "tamper",       "Tamper",            DATA_INT, tamper,
         "crc",          "Packet CRC",        DATA_INT, crc,
         "calc_crc",     "CRC",               DATA_INT, calc_crc,
-        "raw",          "RAW DATA",			 DATA_STRING, strData,
+        "data",          "RAW DATA",         DATA_STRING, strData,
         "mic",          "Integrity",         DATA_STRING, "CRC",
         NULL);
     /* clang-format on */
@@ -114,7 +114,7 @@ static char *output_fields[] = {
         "tamper",
         "crc",
         "calc_crc",
-	    "raw",
+	"data",
         "mic",
         NULL
 };
