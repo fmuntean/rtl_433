@@ -74,6 +74,7 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     ert_id = ((b[2]&0x06)<<23) | (b[7]<<16) | (b[8]<<8) | b[9];
 
     //extract raw data for further processing if needed
+    /*
     char strData[12*2+1];
     const char *hex="0123456789ABCDEF";
     for(int i=0;i<12;i++)
@@ -82,7 +83,8 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
       strData[i*2+1] = hex[b[i] & 0x0F];
     }
     strData[12*2]=0;
-
+*/
+    char *strData = bitrow_asprint_code(bitbuffer->bb, bitbuffer->bits_per_row);    
 
     /* clang-format off */
     data = data_make(
@@ -98,6 +100,8 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     /* clang-format on */
 
     decoder_output_data(decoder, data);
+
+    free(strData);
     return 1;
 }
 
