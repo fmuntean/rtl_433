@@ -134,5 +134,6 @@ r_device ert_scmp = {
         .reset_limit = 64,
         .decode_fn   = &scmp_decode,
         .disabled    = 0,
-        .fields      = output_fields
+        .fields      = output_fields,
+        .tolerance   = 10 //us
 };

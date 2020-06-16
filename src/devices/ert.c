@@ -11,6 +11,7 @@
 
 #include "decoder.h"
 
+
 /**
 ERT SCM sensors.
 
@@ -127,4 +128,5 @@ r_device ert_amr = {
         .decode_fn   = &ert_decode,
         .disabled    = 0,
         .fields      = output_fields,
+        .tolerance   = 10 //us
 };
