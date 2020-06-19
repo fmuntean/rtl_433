@@ -67,4 +67,8 @@ void bitrow_printf(uint8_t const *bitrow, unsigned bit_len, char const *restrict
 /// For quick and easy debugging, not for regular usage.
 void bitrow_debugf(uint8_t const *bitrow, unsigned bit_len, char const *restrict format, ...);
 
+/// print bitrow into a string
+/// Note: free the string after use
+static char *bitrow_asprint_code(uint8_t const *bitrow, unsigned bit_len);
+
 #endif /* INCLUDE_DECODER_UTIL_H_ */
