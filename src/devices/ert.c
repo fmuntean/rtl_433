@@ -59,7 +59,7 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     b = bitbuffer->bb[0];
     if (crc16(&b[2], 10, 0x6F63, 0)){
         //if (decoder->verbose) 
-            bitrow_printf(bitbuffer->bb, bitbuffer->bits_per_row[0], "ERT-SCM Invalid CRC: %s: raw msg: ", __func__);
+            bitrow_printf(bitbuffer->bb[0], bitbuffer->bits_per_row[0], "ERT-SCM Invalid CRC: %s: raw msg: ", __func__);
         return DECODE_FAIL_MIC;
         }
 
@@ -68,13 +68,12 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 
     /* Extract parameters */
     physical_tamper = (b[3]&0xC0) >> 6;
-    ert_type = (b[3]&0x60) >> 2;
+    ert_type = (b[3] >> 2) & 0x0F;
     encoder_tamper = b[3]&0x03;
     consumption_data = (b[4]<<16) | (b[5]<<8) | b[6];
     ert_id = ((b[2]&0x06)<<23) | (b[7]<<16) | (b[8]<<8) | b[9];
 
     //extract raw data for further processing if needed
-    /*
     char strData[12*2+1];
     const char *hex="0123456789ABCDEF";
     for(int i=0;i<12;i++)
@@ -83,10 +82,8 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
       strData[i*2+1] = hex[b[i] & 0x0F];
     }
     strData[12*2]=0;
-*/
-    char *strData = bitrow_asprint_code(bitbuffer->bb, bitbuffer->bits_per_row);    
 
-    /* clang-format off */
+   // char *strData = bitrow_asprint_code(&bitbuffer->bb[0], bitbuffer->bits_per_row[0]);    /* clang-format off */
     data = data_make(
             "model",           "",                 DATA_STRING, "ERT-SCM",
             "id",              "Id",               DATA_INT,    ert_id,
@@ -101,7 +98,7 @@ static int ert_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 
     decoder_output_data(decoder, data);
 
-    free(strData);
+    //free(strData);
     return 1;
 }
 
@@ -122,9 +119,10 @@ r_device ert_amr = {
         .modulation  = OOK_PULSE_MANCHESTER_ZEROBIT,
         .short_width = 30,
         .long_width  = 30,
-        .gap_limit   = 0,
-        .reset_limit = 64,
+        .gap_limit   = 1000,
+        .reset_limit = 500, //64,
         .decode_fn   = &ert_decode,
         .disabled    = 0,
         .fields      = output_fields,
+        .tolerance   = 20 //us
 };

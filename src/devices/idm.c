@@ -10,7 +10,8 @@
 */
 
 #include "decoder.h"
-
+#include "decoder_util.h"
+#include <stdlib.h>
 /**
 ERT IDM sensors.
 
@@ -105,7 +106,7 @@ static int idm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     packet_crc = (b[90]<<8) | b[91]; 
     
 //extract raw data for further processing if needed
-/*
+
     char strData[92*2+1];
     const char *hex="0123456789ABCDEF";
     for(int i=0;i<92;i++)
@@ -114,8 +115,8 @@ static int idm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
       strData[i*2+1] = hex[b[i] & 0x0F];
     }
     strData[92*2]=0;
-  */
-    char *strData = bitrow_asprint_code(bitbuffer->bb, bitbuffer->bits_per_row);  
+
+//    char *strData = bitrow_asprint_code(bitbuffer->bb[0], bitbuffer->bits_per_row[0]);  
 
 
     /* clang-format off */
@@ -131,14 +132,14 @@ static int idm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
             "net",                    "Consumption NET",         DATA_INT, last_consumption_net,
             "sn_crc",                 "Serial Number CRC",       DATA_INT, sn_crc,
             "packet_crc",             "Packet CRC",              DATA_INT, packet_crc,
-            "codes",                  "RAW DATA",					       DATA_STRING, strData,
+            "codes",                  "RAW DATA",  	         DATA_STRING, strData,
             "mic",                    "Integrity",               DATA_STRING, "CRC",
             NULL);
     /* clang-format on */
 
     decoder_output_data(decoder, data);
     
-    free(strData);
+//    free(strData);
     return 1;
 }
 
@@ -168,5 +169,6 @@ r_device ert_idm = {
         .reset_limit = 64,
         .decode_fn   = &idm_decode,
         .disabled    = 0,
-        .fields      = output_fields
+        .fields      = output_fields,
+	.tolerance   = 10 //us
 };

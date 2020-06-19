@@ -10,7 +10,7 @@
 */
 
 #include "decoder.h"
-
+#include "decoder_util.h"
 /**
 ERT SCM+ sensors.
 
@@ -76,7 +76,7 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     //crc = (b[14]<<8) | b[15]; 
 
     //extract raw data for further processing if needed
-    /*
+  
     char strData[16*2+1];
     const char *hex="0123456789ABCDEF";
     for(int i=0;i<16;i++)
@@ -85,8 +85,8 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
       strData[i*2+1] = hex[b[i] & 0x0F];
     }
     strData[16*2]=0;
-    */
-    char *strData = bitrow_asprint_code(bitbuffer->bb, bitbuffer->bits_per_row);
+  
+//    char *strData = bitrow_asprint_code(bitbuffer->bb[0], bitbuffer->bits_per_row[0]);
 
     /* clang-format off */
     data = data_make(
@@ -105,7 +105,7 @@ static int scmp_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 
     decoder_output_data(decoder, data);
 
-    free(strData);
+//    free(strData);
 
 
     return 1;
@@ -134,5 +134,6 @@ r_device ert_scmp = {
         .reset_limit = 64,
         .decode_fn   = &scmp_decode,
         .disabled    = 0,
-        .fields      = output_fields
+        .fields      = output_fields,
+	.tolerance   = 10 //us
 };
