@@ -290,6 +290,7 @@
     DECL(homelead_hg9901) \
     DECL(maverick_xr50) \
 
+    DECL(ert_scmp) \
     /* Add new decoders here. */
 
 #define DECL(name) extern r_device name;
