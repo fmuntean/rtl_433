@@ -130,10 +130,10 @@ r_device ert_scmp = {
         .modulation  = OOK_PULSE_MANCHESTER_ZEROBIT,
         .short_width = 30,
         .long_width  = 30,
-        .gap_limit   = 0,
-        .reset_limit = 64,
+        .gap_limit   = 500,  //0,
+        .reset_limit = 1000, //64,
         .decode_fn   = &scmp_decode,
         .disabled    = 0,
         .fields      = output_fields,
-        .tolerance   = 10 //us
+		.tolerance   = 20 //us
 };

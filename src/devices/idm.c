@@ -132,7 +132,7 @@ static int idm_decode(r_device *decoder, bitbuffer_t *bitbuffer)
             "net",                    "Consumption NET",         DATA_INT, last_consumption_net,
             "sn_crc",                 "Serial Number CRC",       DATA_INT, sn_crc,
             "packet_crc",             "Packet CRC",              DATA_INT, packet_crc,
-            "codes",                  "RAW DATA",					       DATA_STRING, strData,
+            "codes",                  "RAW DATA",  	         DATA_STRING, strData,
             "mic",                    "Integrity",               DATA_STRING, "CRC",
             NULL);
     /* clang-format on */
@@ -165,10 +165,10 @@ r_device ert_idm = {
         .modulation  = OOK_PULSE_MANCHESTER_ZEROBIT,
         .short_width = 30,
         .long_width  = 30,
-        .gap_limit   = 0,
-        .reset_limit = 64,
+        .gap_limit   = 500,  //0,
+        .reset_limit = 1000, //64,
         .decode_fn   = &idm_decode,
         .disabled    = 0,
         .fields      = output_fields,
-        .tolerance   = 10 //us
+		.tolerance   = 20 //us
 };
