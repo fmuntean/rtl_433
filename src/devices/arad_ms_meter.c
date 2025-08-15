@@ -50,9 +50,9 @@ static int arad_mm_dialog3g_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     }
 
     unsigned start_pos = bitbuffer_search(bitbuffer, row, 0, preamble_pattern, 48);
-    start_pos += 48; // skip preamble
+    //start_pos += 48; // skip preamble
 
-    if ((bitbuffer->bits_per_row[row] - start_pos) < 120) {
+    if ((bitbuffer->bits_per_row[row] - start_pos) < 120+48) {
         return DECODE_ABORT_LENGTH; // short buffer or preamble not found
     }
 
@@ -60,13 +60,13 @@ static int arad_mm_dialog3g_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 
     decoder_log_bitbuffer(decoder, 1, __func__, bitbuffer,"Arad Master Meter Dialog3G water utility meter");
 
-    uint8_t b[15];
-    bitbuffer_extract_bytes(bitbuffer, row, start_pos, b, 120);
+    uint8_t b[15+6];
+    bitbuffer_extract_bytes(bitbuffer, row, start_pos, b, 15*8+6*8);
 
     
-    char raw[30];
-    sprintf(raw, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-            b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14]);
+    char raw[2*21];
+    sprintf(raw, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+            b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15], b[16], b[17], b[18], b[19], b[20]);
 
     int serno    = b[0] | (b[1] << 8) | (b[2] << 16); // 24 bit little endian Meter Serial number
     int wreadraw = b[5] | (b[6] << 8) | (b[7] << 16); // 24 bit little endian Meter water consumption reading
