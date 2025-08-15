@@ -102,5 +102,5 @@ r_device const arad_ms_meter = {
         .decode_fn   = &arad_mm_dialog3g_decode,
         .disabled    = 1, // checksum not implemented
         .fields      = output_fields,
-        .verbose     = 1,
+        .verbose     = 3,
 };
