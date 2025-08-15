@@ -63,6 +63,11 @@ static int arad_mm_dialog3g_decode(r_device *decoder, bitbuffer_t *bitbuffer)
     uint8_t b[15];
     bitbuffer_extract_bytes(bitbuffer, row, start_pos, b, 120);
 
+    
+    char raw[30];
+    sprintf(raw, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+            b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14]);
+
     int serno    = b[0] | (b[1] << 8) | (b[2] << 16); // 24 bit little endian Meter Serial number
     int wreadraw = b[5] | (b[6] << 8) | (b[7] << 16); // 24 bit little endian Meter water consumption reading
     float wread = wreadraw * 0.1f;
@@ -76,6 +81,7 @@ static int arad_mm_dialog3g_decode(r_device *decoder, bitbuffer_t *bitbuffer)
         "id",          "Serial No",      DATA_STRING,    sernoout,
         "volume_m3",    "Volume",        DATA_FORMAT,    "%.1f m3",  DATA_DOUBLE, wread,
         "waterread",    "Water Read",    DATA_DOUBLE,    wread,
+        "raw",          "Raw Data",      DATA_STRING,     raw,
         //"mic",         "Integrity",      DATA_STRING,    "CHECKSUM",
         NULL);
     /* clang-format on */
@@ -102,5 +108,5 @@ r_device const arad_ms_meter = {
         .decode_fn   = &arad_mm_dialog3g_decode,
         .disabled    = 1, // checksum not implemented
         .fields      = output_fields,
-        .verbose     = 3,
+        .tolerance   = 15 // us
 };
