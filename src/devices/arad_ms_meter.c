@@ -58,6 +58,8 @@ static int arad_mm_dialog3g_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 
     bitbuffer_invert(bitbuffer);
 
+    decoder_logf_bitbuffer(decoder, 2, __func__, bitbuffer);
+    
     uint8_t b[15];
     bitbuffer_extract_bytes(bitbuffer, row, start_pos, b, 120);
 
@@ -70,11 +72,12 @@ static int arad_mm_dialog3g_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 
     /* clang-format off */
     data_t *data = data_make(
-            "model",       "",               DATA_STRING,    "AradMsMeter-Dialog3G",
-            "id",          "Serial No",      DATA_STRING,    sernoout,
-            "volume_m3",    "Volume",        DATA_FORMAT,    "%.1f m3",  DATA_DOUBLE, wread,
-            //"mic",         "Integrity",      DATA_STRING,    "CHECKSUM",
-            NULL);
+        "model",       "",               DATA_STRING,    "AradMsMeter-Dialog3G",
+        "id",          "Serial No",      DATA_STRING,    sernoout,
+        "volume_m3",    "Volume",        DATA_FORMAT,    "%.1f m3",  DATA_DOUBLE, wread,
+        "waterread",    "Water Read",    DATA_DOUBLE,    wread,
+        //"mic",         "Integrity",      DATA_STRING,    "CHECKSUM",
+        NULL);
     /* clang-format on */
 
     decoder_output_data(decoder, data);
@@ -84,6 +87,7 @@ static int arad_mm_dialog3g_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 static char const *const output_fields[] = {
         "model",
         "id",
+        "volume_m3",
         "waterread",
         //"mic",
         NULL,
