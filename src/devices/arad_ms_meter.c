@@ -58,7 +58,7 @@ static int arad_mm_dialog3g_decode(r_device *decoder, bitbuffer_t *bitbuffer)
 
     bitbuffer_invert(bitbuffer);
 
-    decoder_log_bitbuffer(decoder, 2, __func__, bitbuffer,"Arad Master Meter Dialog3G water utility meter");
+    decoder_log_bitbuffer(decoder, 1, __func__, bitbuffer,"Arad Master Meter Dialog3G water utility meter");
 
     uint8_t b[15];
     bitbuffer_extract_bytes(bitbuffer, row, start_pos, b, 120);
